@@ -1,0 +1,17 @@
+---
+
+- name: Verify
+  hosts: all
+
+  tasks:
+
+    - name: check sshd conf
+      command: cat /etc/ssh/sshd_config
+      register: sshd_conf
+
+    - name: assert check config
+      assert:
+        thats:
+          - 'PasswordAuthentication yes' not in sshd_conf.stdout
+          - '#PubkeyAuthentication yes' not in sshd_conf.stdout
+          - 'PubkeyAuthentication yes' in sshd_conf.stdout

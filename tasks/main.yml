@@ -8,7 +8,7 @@
     size: "{{ hostvars[inventory_hostname].size | default(droplet_size) }}"
     image: "{{ hostvars[inventory_hostname].image | default(droplet_image) }}"
     tags: "{{ hostvars[inventory_hostname].tags | default(droplet_tags) | default([]) }}"
-    user_data: "{{ hostvars[inventory_hostname].user_data | default(droplet_user_data) | default('') }}"
+    user_data: "{{ '#cloud-config\n' + hostvars[inventory_hostname].user_data | default(droplet_user_data) | default('') | to_nice_yaml}}"
     ipv6: "{{ hostvars[inventory_hostname].ipv6 | default(droplet_ipv6) | default(false) }}"
     state: present
     unique_name: true
@@ -24,7 +24,7 @@
     groups: "{{ droplet_group | default('newly_created') }}"
     name: "{{ created_droplet.data.ip_address }}" 
   delegate_to: localhost
-  when: droplet_return_name not defined
+  when: droplet_return_name is not defined
 
 - name: main | add to inventory
   add_host:
