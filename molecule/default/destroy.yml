@@ -3,9 +3,41 @@
   hosts: localhost
   connection: local
   gather_facts: false
-  no_log: "{{ molecule_no_log }}"
+  no_log: false #"{{ molecule_no_log }}"
+  vars_files:
+    - ~/.digital_ocean.yml
   tasks:
-    # Developer must implement.
+    - block:
+        - name: Populate instance config
+          set_fact:
+            instance_conf: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
+            skip_instances: false
+      rescue:
+        - name: Populate instance config when file missing
+          set_fact:
+            instance_conf: {}
+            skip_instances: true
+
+    - name: Destroy molecule instance(s)
+      digital_ocean:
+        name: "{{ item.instance }}"
+        id: "{{ item.droplet_id }}"
+        api_token: "{{ digital_ocean_token }}"
+        state: absent
+      register: server
+      with_items: "{{ instance_conf }}"
+      when: not skip_instances
+      async: 7200
+      poll: 0
+
+    - name: Wait for instance(s) deletion to complete
+      async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: digitalocean_jobs
+      until: digitalocean_jobs.finished
+      retries: 300
+      with_items: "{{ server.results }}"
+
 
     # Mandatory configuration for Molecule to function.
 
@@ -15,6 +47,6 @@
 
     - name: Dump instance config
       copy:
-        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        content: "{{ instance_conf | molecule_to_yaml | molecule_header }}"
         dest: "{{ molecule_instance_config }}"
       when: server.changed | bool

@@ -11,7 +11,7 @@
 
     - name: assert check config
       assert:
-        thats:
-          - 'PasswordAuthentication yes' not in sshd_conf.stdout
-          - '#PubkeyAuthentication yes' not in sshd_conf.stdout
-          - 'PubkeyAuthentication yes' in sshd_conf.stdout
+        that:
+          - "'PasswordAuthentication yes' not in sshd_conf.stdout"
+          - "'#PubkeyAuthentication yes' not in sshd_conf.stdout"
+          - "'PubkeyAuthentication yes' in sshd_conf.stdout"
